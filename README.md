@@ -6,11 +6,11 @@ Bands-in-town command line interface tool to track bands you want to see.
 
 The server is made up of the following components:
 
-1. Watchman (Watchlist manager)
+1. Agent (Watchlist manager)
     - Mark bands that you want to watch for and know when on tour and if coming to town
-2. SiS (Stay in Sync)
+2. Roadie
     - Sync all bands data to the extent possible to database
-3. GoldRecords
+3. SolidGold
     - Store all the things
 4. WillCall
     - Queue Management / Orchestration
