@@ -11,7 +11,7 @@ setup(
     author_email="james@jamescampbell.us",
     version=version,
     license="GPLv3",
-    description="Get band tour information and watchlist from the command line",
+    description="Get band tour info and watchlist from the command line",
     packages=["bandaid"],
     py_modules=["bandaid"],
     keywords=["band", "tracking", "tour-dates", "music-tracking", "bands"],
