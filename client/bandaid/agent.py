@@ -1,23 +1,12 @@
 """Gets latest band data for a particular band and adds to user watchlist."""
 from bs4 import BeautifulSoup as bs
 import requests 
-import redis
 import argparse
 
-__version__ = "1.0.0"
+__version__ = "1.0.2"
 
 
-def connectRedis():
-    r = redis.Redis(host='localhost', port=6379,
-                    charset="utf-8", decode_responses=True)
-    try:
-        r.ping()
-    except redis.exceptions.ConnectionError:
-        exit('Redis is not started.')
-    return r
-
-
-def getBand(rs, bandname):
+def getBand(bandname):
     """
     Get band page and related data
     """
@@ -48,8 +37,7 @@ def prepper():
 
 def main():
     args = prepper()
-    rs = connectRedis()
-    getBand(rs, " ".join(args.bandname))
+    getBand(" ".join(args.bandname))
 
 
 if __name__ == "__main__":
