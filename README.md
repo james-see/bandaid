@@ -8,6 +8,7 @@ The server is made up of the following components:
 
 1. Agent (Watchlist manager)
     - Mark bands that you want to watch for and know when on tour and if coming to town
+    - Use SQLite database to track and update
 2. Roadie
     - Sync all bands data to the extent possible to database
 3. SolidGold
