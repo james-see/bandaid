@@ -14,6 +14,7 @@ def enumerator(url="https://www.bandsintown.com/a/1"):
     Performs head request to confirm page exists and stores in queue
 
     Returns:
+    ---
     Dictionary of True or false that page exists
     """
     r = requests.head(url)
@@ -32,11 +33,34 @@ def connectRedis():
         exit('Redis is not started.')
     return r
 
-def main():
-    rs = connectRedis()
-    url, status = enumerator()
+
+def updateRedis(rs, status, url):
+    """
+    What
+    ---
+    Updates redis sets active or inactive with url
+    
+    Returns: 
+    ---
+    nothing
+    """
+    if status == 1:
+        rs.sadd('active', url)
+    else:
+        rs.sadd('inactive', url)
     rs.hmset(url, {"name":url, "status_code":status})
-    print(rs.hget(url, 'status_code'))
+
+    
+def main():
+    baseurl = "https://www.bandsintown.com/a/{}"
+    rs = connectRedis()
+    totaldonesofar = rs.scard('active') + rs.scard('inactive')
+    i = totaldonesofar
+    while i < 1674009:
+        url, status = enumerator(baseurl.format(str(i)))
+        updateRedis(rs, status, baseurl.format(str(i)))
+        i += 1
+        print(i)
 
 
 if __name__ == "__main__":
