@@ -1,8 +1,8 @@
-from bs4 import BeautifulSoup
+"""Syncs all known band pages statuses 200/404 to redis sets"""
 import requests 
 import redis
 
-# example url 
+# example url
 # `curl https://www.bandsintown.com/a/1 | grep "upcomingEventsSection" | html2text -style pretty`
 # `curl https://www.bandsintown.com/a/1 | grep "artistInfo" | html2text -style pretty`
 
@@ -25,11 +25,11 @@ def enumerator(url="https://www.bandsintown.com/a/1"):
 
 
 def connectRedis():
-    r = redis.Redis(host='localhost', port=6379, 
-                        charset="utf-8", decode_responses=True)
+    r = redis.Redis(host='localhost', port=6379,
+                    charset="utf-8", decode_responses=True)
     try:
         r.ping()
-    except redis.exceptions.ConnectionError as e:
+    except redis.exceptions.ConnectionError:
         exit('Redis is not started.')
     return r
 
@@ -39,8 +39,7 @@ def updateRedis(rs, status, url):
     What
     ---
     Updates redis sets active or inactive with url
-    
-    Returns: 
+    Returns:
     ---
     nothing
     """
@@ -48,9 +47,9 @@ def updateRedis(rs, status, url):
         rs.sadd('active', url)
     else:
         rs.sadd('inactive', url)
-    rs.hmset(url, {"name":url, "status_code":status})
+    rs.hmset(url, {"name": url, "status_code": status})
 
-    
+
 def main():
     baseurl = "https://www.bandsintown.com/a/{}"
     rs = connectRedis()
