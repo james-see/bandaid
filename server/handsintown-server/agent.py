@@ -37,7 +37,9 @@ def prepper():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--band', dest='bandname',
-                        help="band to lookup")
+                        help="band to lookup", type=str, nargs='+')
+    parser.add_argument('-w', '--watchlist', dest='watchlist',
+                        action='store_true', help="add to watchlist")
     args = parser.parse_args()
     return args
 
@@ -45,7 +47,7 @@ def prepper():
 def main():
     args = prepper()
     rs = connectRedis()
-    getBand(rs, args.bandname)
+    getBand(rs, " ".join(args.bandname))
 
 
 if __name__ == "__main__":
