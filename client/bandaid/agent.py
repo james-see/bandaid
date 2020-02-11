@@ -4,7 +4,7 @@ import requests
 import redis
 import argparse
 
-__version__ = "1.0.1"
+__version__ = "1.0.0"
 
 
 def connectRedis():
