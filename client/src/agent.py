@@ -1,8 +1,10 @@
 """Gets latest band data for a particular band and adds to user watchlist."""
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import requests 
 import redis
 import argparse
+
+__version__ = "0.0.1"
 
 
 def connectRedis():
@@ -22,10 +24,10 @@ def getBand(rs, bandname):
     baseurl = "https://www.bandsintown.com/{}"
     r = requests.get(baseurl.format(bandname))
     if r.status_code == 200:
-        if "upcomingEventsSection" in r.text:
-            print(f"{bandname} is on tour!")
-        else:
+        if "No upcoming events</div>" in r.text:
             print(f"No upcoming events for {bandname}.")
+        else:
+            print(f"{bandname} is on tour!")
         exit()
     else:
         exit(1)
