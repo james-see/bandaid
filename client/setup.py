@@ -16,7 +16,7 @@ setup(
     py_modules=["bandaid"],
     keywords=["band", "tracking", "tour-dates", "music-tracking", "bands"],
     classifiers=["Programming Language :: Python :: 3 :: Only"],
-    install_requires=["pprint", "bs4", "requests", "redis"],
+    install_requires=["pprint", "bs4", "requests"],
     entry_points={"console_scripts": ["bandaid = bandaid.agent:main"]},
     url="https://github.com/jamesacampbell/bandaid",
     download_url="https://github.com/jamesacampbell/bandaid/archive/{}.tar.gz".format(
