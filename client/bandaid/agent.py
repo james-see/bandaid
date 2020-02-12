@@ -3,7 +3,28 @@ from bs4 import BeautifulSoup as bs
 import requests 
 import argparse
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
+
+
+def printlogo():
+    """
+    Prints logo
+    Returns nothing
+    """
+    print("")
+    print("     ;;;;;;;;;;;;;;;;;;; ")
+    print("     ;;;;;;;;;;;;;;;;;;; ")
+    print("     ;                 ; ")
+    print("     ;     bandaid     ; ")
+    print("     ;                 ; ")
+    print("     ;  +-----------+  ; ")
+    print("     ;  |by JC 2020 |  ; ")
+    print("     ;  +-----------+  ; ")
+    print("     ;                 ; ")
+    print(",;;;;;            ,;;;;; ")
+    print(";;;;;;            ;;;;;; ")
+    print("`;;;;'            `;;;;' ")
+    print("")
 
 
 def getBand(bandname):
@@ -36,7 +57,11 @@ def prepper():
 
 
 def main():
+    """
+    Main function that runs everything
+    """
     args = prepper()
+    printlogo()
     getBand(" ".join(args.bandname))
 
 
