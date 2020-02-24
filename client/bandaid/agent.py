@@ -9,7 +9,7 @@ import sqlite3
 import sys
 
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 
 
 def printlogo():
@@ -35,7 +35,7 @@ def printlogo():
 
 def initDB(dbpath, zipcode, username):
     open(dbpath, "w+")
-    conn = sqlite3.connect(dbpath)
+    conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
     c.execute('''CREATE TABLE tracker
              (id integer PRIMARY KEY, date_added text, date_last_checked text,
