@@ -41,7 +41,7 @@ def initDB(dbpath, zipcode, username, lat, lng):
     c.execute('''CREATE TABLE tracker
              (id integer PRIMARY KEY, date_added text, date_last_checked text,
              band text, on_tour integer, coming_to_town integer,
-             notified integer, push_updates integer, zipcode integer)''')
+             notified integer, push_updates integer, zipcode integer, lat FLOAT, long FLOAT)''')
     c.execute('''CREATE TABLE user
              (id integer PRIMARY KEY, date_added text, username text,
              zipcode integer, os text, lat FLOAT, long FLOAT )''')
@@ -87,17 +87,23 @@ def inputZip() -> int:
             print("Input only accepts numbers.")
 
 
-def getZipCode(dbpath):
+def getZipCode(dbpath) -> (int, float, float):
     """
     Gets zipcode from user table in sqlite db (check bandaid.cfg for path)
+
+    Returns
+    ---
+    zipcode int
+    lat float
+    long float
     """
     conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
-    c.execute("select zipcode from user where id=1")
+    c.execute("select zipcode, lat, long from user where id=1")
     conn.commit()
-    zipcode = c.fetchone()[0]
+    zipcode = c.fetchone()
     conn.close()
-    return zipcode
+    return zipcode[0], zipcode[1], zipcode[2]
 
 
 def getLatLng(zipcode=22207) -> (float, float):
@@ -130,15 +136,15 @@ def watchlist(bandname, dbpath):
         exit('Thanks!')
     if promptsure not in ['y', 'Y', 'n', 'N']:
         print('Assuming you meant yes, and moving forward with tracking.')
-    zipcode = getZipCode(dbpath)
+    zipcode, lat, lng = getZipCode(dbpath)
     promptzip = input(f"Do you want to track {bandname} to {zipcode}? (y/n): ")
     if promptzip in ["n", "N"]:
         zipcode = input(f"What zip would you like for {bandname}? ")
     sqlstatement = "insert into tracker(date_added, date_last_checked,\
-                    band, on_tour, zipcode) values(?,?,?,?,?)"
+                    band, on_tour, zipcode, lat, long) values(?,?,?,?,?,?,?)"
     insertSQL(sqlstatement, dbpath, (datetime.datetime.now(),
                                      datetime.datetime.now(),
-                                     bandname, 1, int(zipcode)))
+                                     bandname, 1, int(zipcode), lat, lng))
     print('Added band to tracker database. To get status at any time,\
           rerun with -f and -b band')
     # TODO ask user if they want to be automatically notified or manually check
@@ -150,9 +156,11 @@ def getBand(bandname, dbpath):
     """
     Get band page and related data
     """
-    indb = executeSingleSQL("Select band from tracker where band = ?", dbpath, (bandname,))
-    if indb != None:
-        print("You are already tracking tool. Run `bandaid -f tool` to get detailed info.")
+    indb = executeSingleSQL("Select band from tracker where band = ?",
+                            dbpath, (bandname,))
+    if indb is not None:
+        print("You are already tracking tool. Run `bandaid -f tool` to get\
+              detailed info.")
     exit()
     baseurl = "https://www.bandsintown.com/{}"
     r = requests.get(baseurl.format(bandname))
@@ -170,7 +178,7 @@ def getBand(bandname, dbpath):
                       watchlist next time you run.")
                 exit()
     else:
-        exit('Nothing exists for that band name, try another, how about Radiohead?')
+        exit('Nothing exists for that band, try another, how about Radiohead?')
 
 
 def prepper() -> list:
@@ -188,6 +196,8 @@ def prepper() -> list:
                         )
     parser.add_argument('-c', '--config', dest='config', action='store_true',
                         help='print out current config info')
+    parser.add_argument('-v', '--version', action='version',
+                        version="%(prog)s ("+__version__+")")
     args = parser.parse_args()
     return args
 
