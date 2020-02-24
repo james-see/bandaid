@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 # cleans out the folder to get ready to deploy lib
 cd ../client/
 rm -rf build dist bandaid.egg-info

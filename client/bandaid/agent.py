@@ -10,7 +10,7 @@ import sys
 from pprint import pprint
 
 
-__version__ = "1.0.9"
+__version__ = "1.1.0"
 
 
 def printlogo():
@@ -170,10 +170,10 @@ def getBand(bandname, dbpath):
                       watchlist next time you run.")
                 exit()
     else:
-        exit('Nothing exists for that band name.')
+        exit('Nothing exists for that band name, try another, how about Radiohead?')
 
 
-def prepper():
+def prepper() -> list:
     """
     Process all runtime arguments
     """
@@ -206,7 +206,7 @@ def executeSingleSQL(sqlstatement, dbpath, tuplevar):
     return c.fetchone()
 
 
-def insertSQL(sqlstatement, dbpath, tuplevar):
+def insertSQL(sqlstatement, dbpath, tuplevar) -> None:
     conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
     c.execute(sqlstatement, tuplevar)
@@ -232,16 +232,22 @@ def fetchCurrentStatus(bandname, dbpath):
     exit("not fully implemented yet")
 
 
-def printConfig(dbpath):
+def printConfig(dbpath) -> None:
+    """
+    From argparse -c --config to print the bandaid.cfg file
+    """
     conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
-    c.execute("select * from user where id = 1")
+    c.execute('''select * from user where id = 1''')
     conn.commit()
     data = c.fetchone()
-    print(f"Username: {data[0]}")
-    print(f"Lat/Lng: {data[4]}/{data[5]}")
+    print(f"Date Registered: {data[1]}")
+    print(f"Username: {data[2]}")
+    print(f"Zip Code: {data[3]}")
+    print(f"Lat/Lng: {data[5]}/{data[6]}")
     conn.close()
     exit("Thanks for checking the configuration.")
+
 
 def main():
     """
