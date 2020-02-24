@@ -30,23 +30,27 @@ def printlogo():
 
 
 def initDB(dbpath):
+    open(dbpath, "w+")
     conn = sqlite3.connect(dbpath)
     c = conn.cursor()
     c.execute('''CREATE TABLE tracker
-             (date_added text, date_last_checked text, band text, ontour integer, zipcode integer)''')
+             (date_added text, date_last_checked text,
+             band text, on_tour integer, coming_to_town integer,
+             notified integer, push_updates integer, zipcode integer)''')
 
 
 def checkFirstRun():
     """
-    Check if file exists for the sqlite database and if not creates it and cfg
+    Check if file exists for the sqlite database and 
+    if not creates it and cfg and gets zipcode
     """
     my_cfg = Path.home() / ".bandaid.cfg"
     my_db = Path.home() / ".bandaid.db"
     if not my_cfg.exists():
         print("First run, making the donuts...")
         zipcode = input("Enter your zipcode for concerts near you: ")
-        with open(Path.home() / ".bandaid.cfg") as f:
-            f.write('DBPATH=~/.bandaid.db')
+        with open(Path.home() / ".bandaid.cfg", "w+") as f:
+            f.write('DBPATH=~/.bandaid.db\n')
             f.write(f'ZIPCODE={zipcode}')
         initDB(my_db)
         print(f"Database and config file created at {my_cfg}")
@@ -56,7 +60,9 @@ def watchlist(bandname):
     """
     Add band to watchlist, initialize watchlist service and db is doesn't exist
     """
-    conn = sqlite3.connect(Path.home() / ".bandaid.db")
+    # TODO ask user if they want to be automatically notified or manually check
+    # conn = sqlite3.connect(Path.home() / ".bandaid.db")
+    # TODO add supervisord creation and launchctl and permissions potentially
 
 
 def getBand(bandname):
