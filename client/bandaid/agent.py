@@ -9,7 +9,7 @@ import sqlite3
 import sys
 
 
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 
 def printlogo():
@@ -77,7 +77,7 @@ def getZipCode(dbpath):
     """
     Gets zipcode from user table in sqlite db (check bandaid.cfg for path)
     """
-    conn = sqlite3.connect(dbpath)
+    conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
     c.execute("select zipcode from user where id=1")
     conn.commit()
@@ -154,21 +154,21 @@ def prepper():
 
 
 def executeArraySQL(sqlstatement, dbpath):
-    conn = sqlite3.connect(dbpath)
+    conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
     c.execute(sqlstatement)
     return c.fetchall()
 
 
 def executeSingleSQL(sqlstatement, dbpath, tuplevar):
-    conn = sqlite3.connect(dbpath)
+    conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
     c.execute(sqlstatement, tuplevar)
     return c.fetchone()
 
 
 def insertSQL(sqlstatement, dbpath, tuplevar):
-    conn = sqlite3.connect(dbpath)
+    conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
     c.execute(sqlstatement, tuplevar)
     conn.commit()
