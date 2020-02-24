@@ -1,12 +1,13 @@
 """Gets latest band data for a particular band and adds to user watchlist."""
 from bs4 import BeautifulSoup as bs
 import datetime
-from os import environ, getcwd
+from os import environ, getcwd, path
 import requests
 import argparse
 from pathlib import Path
 import sqlite3
 import sys
+from pprint import pprint
 
 
 __version__ = "1.0.8"
@@ -33,7 +34,7 @@ def printlogo():
     print("")
 
 
-def initDB(dbpath, zipcode, username):
+def initDB(dbpath, zipcode, username, lat, lng):
     open(dbpath, "w+")
     conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
@@ -43,12 +44,12 @@ def initDB(dbpath, zipcode, username):
              notified integer, push_updates integer, zipcode integer)''')
     c.execute('''CREATE TABLE user
              (id integer PRIMARY KEY, date_added text, username text,
-             zipcode integer, os text )''')
+             zipcode integer, os text, lat FLOAT, long FLOAT )''')
     currentdate = datetime.datetime.now()
     opersystem = sys.platform
-    c.execute('insert into user(date_added, username, zipcode, os)\
-              values(?, ?, ?, ?)', (currentdate, username, zipcode, opersystem)
-              )
+    c.execute('insert into user(date_added, username, zipcode, os, lat, long)\
+              values(?, ?, ?, ?, ?, ?)',
+              (currentdate, username, zipcode, opersystem, lat, lng))
     conn.commit()
     conn.close()
 
@@ -60,17 +61,30 @@ def checkFirstRun():
     """
     my_cfg = Path.home() / ".bandaid" / "bandaid.cfg"
     my_db = Path.home() / ".bandaid" / "bandaid.db"
-    if not my_cfg.exists():
-        print("First run, making the donuts...")
-        Path.mkdir(Path.home() / ".bandaid")
-        zipcode = input("Enter your zipcode for concerts near you: ")
-        with open(my_cfg, "w+") as f:
-            f.write('DBPATH=~/.bandaid/bandaid.db\n')
-            f.write(f'ZIPCODE={zipcode}')
-        user = (lambda: environ["USERNAME"] if "C:" in getcwd() else environ["USER"])()
-        initDB(my_db, zipcode, user)
-        print(f"Database and config file created at {my_cfg}")
+    if Path(f'{Path.home()}/.bandaid/').exists():
+        return my_db
+    print("First run, making the donuts...")
+    Path.mkdir(Path.home() / ".bandaid", exist_ok=True)
+    zipcode = inputZip()
+    lat, lng = getLatLng(zipcode)
+    with open(my_cfg, "w+") as f:
+        f.write('DBPATH=~/.bandaid/bandaid.db\n')
+        f.write(f'ZIPCODE={zipcode}')
+    user = (lambda: environ["USERNAME"] if "C:" in getcwd() else environ["USER"])()
+    initDB(my_db, zipcode, user, lat, lng)
+    print(f"Database and config file created at {my_cfg}")
     return my_db
+
+
+def inputZip() -> int:
+    """
+    Returns integer zipcode only
+    """
+    while True:
+        try:
+            return int(input("Enter your zipcode for concerts near you: "))
+        except ValueError:
+            print("Input only accepts numbers.")
 
 
 def getZipCode(dbpath):
@@ -84,6 +98,25 @@ def getZipCode(dbpath):
     zipcode = c.fetchone()[0]
     conn.close()
     return zipcode
+
+
+def getLatLng(zipcode=22207):
+    """
+    Uses free service to get latitude and longitude and store 
+    
+    Returns
+    ---
+    lat float var for user table
+    lng float var for user table
+
+    """
+    r = requests.get(f"https://geocode.xyz/{zipcode}?json=1")
+    data = r.json()
+    for k,v in data.items():
+        print(k, v)
+    lat = data.get('latt')
+    lng = data.get('longt')
+    return lat, lng
 
 
 def watchlist(bandname, dbpath):
@@ -120,6 +153,10 @@ def getBand(bandname, dbpath):
     """
     Get band page and related data
     """
+    indb = executeSingleSQL("Select band from tracker where band = ?", dbpath, (bandname,))
+    if indb != None:
+        print("You are already tracking tool. Run `bandaid -f tool` to get detailed info.")
+    exit()
     baseurl = "https://www.bandsintown.com/{}"
     r = requests.get(baseurl.format(bandname))
     if r.status_code == 200:
@@ -127,13 +164,16 @@ def getBand(bandname, dbpath):
             print(f"No upcoming events for {bandname}.")
         else:
             print(f"{bandname} is on tour!")
-            bandtrack = input(f"Would you like to track {bandname}? (y/n)")
+            bandtrack = input(f"Would you like to track {bandname}? (y/n) ")
             if bandtrack in ['y', 'Y']:
                 print(f"Adding {bandname} to your watchlist now...")
                 watchlist(bandname, dbpath)
-        exit()
+            else:
+                print("To track if they are coming near you, add to\
+                      watchlist next time you run.")
+                exit()
     else:
-        exit(1)
+        exit('Nothing exists for that band name.')
 
 
 def prepper():
