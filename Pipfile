@@ -5,12 +5,13 @@ verify_ssl = true
 
 [dev-packages]
 flake8 = "*"
+autopep8 = "*"
+pylint = "*"
 
 [packages]
 beautifulsoup4 = "*"
 requests = "*"
 redis = "*"
-pylint = "*"
 
 [requires]
 python_version = "3.8"

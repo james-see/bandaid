@@ -1,9 +1,9 @@
 """Gets latest band data for a particular band and adds to user watchlist."""
 from bs4 import BeautifulSoup as bs
-import requests 
+import requests
 import argparse
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 
 def printlogo():
@@ -27,6 +27,12 @@ def printlogo():
     print("")
 
 
+def watchlist(bandname):
+    """
+    Add band to watchlist, initialize watchlist service and db is doesn't exist
+    """
+
+
 def getBand(bandname):
     """
     Get band page and related data
@@ -45,7 +51,7 @@ def getBand(bandname):
 
 def prepper():
     """
-    Process all runtime arguments.
+    Process all runtime arguments
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--band', dest='bandname',
@@ -62,7 +68,10 @@ def main():
     """
     args = prepper()
     printlogo()
-    getBand(" ".join(args.bandname))
+    if args.bandname:
+        getBand(" ".join(args.bandname))
+    else:
+        exit('Must set band name -h for help.')
 
 
 if __name__ == "__main__":
