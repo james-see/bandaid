@@ -7,10 +7,11 @@ import argparse
 from pathlib import Path
 import sqlite3
 import sys
+import shutil
 from pprint import pprint
 
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 
 def printlogo():
@@ -198,6 +199,8 @@ def prepper() -> list:
                         help='print out current config info')
     parser.add_argument('-v', '--version', action='version',
                         version="%(prog)s ("+__version__+")")
+    parser.add_argument('-r', '--reset', dest='reset', action='store_true',
+                        help='resets everything back to original download')
     args = parser.parse_args()
     return args
 
@@ -264,6 +267,9 @@ def main():
     Main function that runs everything
     """
     args = prepper()
+    if args.reset:
+        shutil.rmtree(Path.home() / ".bandaid")
+        exit('Directory wiped and data wiped.')
     dbpath = checkFirstRun()
     if args.config:
         printConfig(dbpath)
