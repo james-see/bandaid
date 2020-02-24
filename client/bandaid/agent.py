@@ -100,10 +100,9 @@ def getZipCode(dbpath):
     return zipcode
 
 
-def getLatLng(zipcode=22207):
+def getLatLng(zipcode=22207) -> (float, float):
     """
-    Uses free service to get latitude and longitude and store 
-    
+    Uses free service to get latitude and longitude and store
     Returns
     ---
     lat float var for user table
@@ -112,8 +111,6 @@ def getLatLng(zipcode=22207):
     """
     r = requests.get(f"https://geocode.xyz/{zipcode}?json=1")
     data = r.json()
-    for k,v in data.items():
-        print(k, v)
     lat = data.get('latt')
     lng = data.get('longt')
     return lat, lng
@@ -189,6 +186,8 @@ def prepper():
                         action='store_true', help="fetch a band (with -b flag)\
                         or no extra flag for all bands tracking current status"
                         )
+    parser.add_argument('-c', '--config', dest='config', action='store_true',
+                        help='print out current config info')
     args = parser.parse_args()
     return args
 
@@ -233,12 +232,25 @@ def fetchCurrentStatus(bandname, dbpath):
     exit("not fully implemented yet")
 
 
+def printConfig(dbpath):
+    conn = sqlite3.connect(str(dbpath))
+    c = conn.cursor()
+    c.execute("select * from user where id = 1")
+    conn.commit()
+    data = c.fetchone()
+    print(f"Username: {data[0]}")
+    print(f"Lat/Lng: {data[4]}/{data[5]}")
+    conn.close()
+    exit("Thanks for checking the configuration.")
+
 def main():
     """
     Main function that runs everything
     """
     args = prepper()
     dbpath = checkFirstRun()
+    if args.config:
+        printConfig(dbpath)
     printlogo()
     if args.fetcher and args.bandname:
         fetchCurrentStatus(args.bandname, dbpath)
