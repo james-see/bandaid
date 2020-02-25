@@ -1,14 +1,15 @@
 """Gets latest band data for a particular band and adds to user watchlist."""
 from bs4 import BeautifulSoup as bs
 import datetime
+from datetime import date
 from os import environ, getcwd, path
 import requests
 import argparse
 from pathlib import Path
+import re
 import sqlite3
 import sys
 import shutil
-from pprint import pprint
 
 
 __version__ = "1.1.1"
@@ -42,10 +43,15 @@ def initDB(dbpath, zipcode, username, lat, lng):
     c.execute('''CREATE TABLE tracker
              (id integer PRIMARY KEY, date_added text, date_last_checked text,
              band text, on_tour integer, coming_to_town integer,
-             notified integer, push_updates integer, zipcode integer, lat FLOAT, long FLOAT)''')
+             notified integer, push_updates integer, zipcode integer,
+             lat FLOAT, long FLOAT)''')
     c.execute('''CREATE TABLE user
              (id integer PRIMARY KEY, date_added text, username text,
              zipcode integer, os text, lat FLOAT, long FLOAT )''')
+    c.execute('''CREATE TABLE events
+              (id integer PRIMARY KEY, date_added text, band text,
+              date_of_event text, city_of_event text, venue_name text,
+              city_lat FLOAT, city_long FLOAT)''')
     currentdate = datetime.datetime.now()
     opersystem = sys.platform
     c.execute('insert into user(date_added, username, zipcode, os, lat, long)\
@@ -71,7 +77,8 @@ def checkFirstRun():
     with open(my_cfg, "w+") as f:
         f.write('DBPATH=~/.bandaid/bandaid.db\n')
         f.write(f'ZIPCODE={zipcode}')
-    user = (lambda: environ["USERNAME"] if "C:" in getcwd() else environ["USER"])()
+    user = (lambda: environ["USERNAME"]
+            if "C:" in getcwd() else environ["USER"])()
     initDB(my_db, zipcode, user, lat, lng)
     print(f"Database and config file created at {my_cfg}")
     return my_db
@@ -160,9 +167,8 @@ def getBand(bandname, dbpath):
     indb = executeSingleSQL("Select band from tracker where band = ?",
                             dbpath, (bandname,))
     if indb is not None:
-        print("You are already tracking tool. Run `bandaid -f tool` to get\
-              detailed info.")
-    exit()
+        print(
+            f"You are already tracking {bandname}. Run `bandaid - f {bandname}` to get detailed info.")
     baseurl = "https://www.bandsintown.com/{}"
     r = requests.get(baseurl.format(bandname))
     if r.status_code == 200:
@@ -170,14 +176,41 @@ def getBand(bandname, dbpath):
             print(f"No upcoming events for {bandname}.")
         else:
             print(f"{bandname} is on tour!")
-            bandtrack = input(f"Would you like to track {bandname}? (y/n) ")
-            if bandtrack in ['y', 'Y']:
-                print(f"Adding {bandname} to your watchlist now...")
-                watchlist(bandname, dbpath)
-            else:
-                print("To track if they are coming near you, add to\
-                      watchlist next time you run.")
-                exit()
+            bdata = bs(r.text, 'html.parser')
+            soup = bdata.find("div", class_=re.compile('upcomingEvents*'))
+            eventas = soup.find_all("a", class_=re.compile('event*'))
+            print(f"{bandname} dates and locations:")
+            for item in eventas:
+                divs = item.find_all("div", class_=re.compile('event*'))
+                date_of_concert = divs[1].get_text()
+                date_of_concert += str(date.today().year)
+                city_state = str(divs[5].get_text())
+                city_state = city_state + ", USA"
+                city_state = city_state.strip()
+                city_state_updated = ''.join(city_state.split())
+                event_venue = str(divs[6].get_text())
+                lat, lng = getLatLng(city_state_updated)
+                sql = "insert into events(date_added,\
+                                          band, date_of_event,\
+                                          city_of_event, venue_name,\
+                                          city_lat, city_long)\
+                                          values(?, ?, ?, ?, ?, ?, ?)"
+                insertSQL(sql, dbpath, (datetime.datetime.now(), bandname,
+                                        date_of_concert, city_state,
+                                        event_venue, lat, lng)
+                          )
+                print(f"{date_of_concert} - {city_state} - {event_venue}")
+                # TODO add in calculate distance from zipcode
+            if indb == None:
+                bandtrack = input(
+                    f"Would you like to track {bandname}? (y/n) ")
+                if bandtrack in ['y', 'Y']:
+                    print(f"Adding {bandname} to your watchlist now...")
+                    watchlist(bandname, dbpath)
+                else:
+                    print("To track if they are coming near you, add to\
+                        watchlist next time you run.")
+                    exit()
     else:
         exit('Nothing exists for that band, try another, how about Radiohead?')
 
@@ -247,7 +280,7 @@ def fetchCurrentStatus(bandname, dbpath):
 
 def printConfig(dbpath) -> None:
     """
-    From argparse -c --config to print the bandaid.cfg file
+    From argparse - c - -config to print the bandaid.cfg file
     """
     conn = sqlite3.connect(str(dbpath))
     c = conn.cursor()
